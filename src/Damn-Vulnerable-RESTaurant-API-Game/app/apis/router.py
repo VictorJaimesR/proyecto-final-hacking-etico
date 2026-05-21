@@ -8,6 +8,7 @@ from apis.referrals.service import router as referrals_router
 from apis.users.service import router as users_router
 from config import ENV, ENVIRONMENT
 from fastapi import APIRouter
+from apis.coupons.service import router as coupons_router
 
 api_router = APIRouter()
 api_router.include_router(healthcheck_router, prefix="", tags=["healthcheck"])
@@ -20,3 +21,4 @@ api_router.include_router(auth_router, prefix="", tags=["auth"])
 api_router.include_router(admin_router, prefix="", tags=["admin"])
 api_router.include_router(users_router, prefix="", tags=["users"])
 api_router.include_router(referrals_router, prefix="", tags=["referrals"])
+api_router.include_router(coupons_router, prefix="", tags=["coupons"])
