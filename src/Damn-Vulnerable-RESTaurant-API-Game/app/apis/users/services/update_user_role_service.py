@@ -15,8 +15,16 @@ async def update_user_role(
     current_user: Annotated[models.User, Depends(get_current_user)],
     db: Session = Depends(get_db),
 ):
-    # this method allows staff to give Employee role to other users
-    # Chef role is restricted
+
+   # Mitigacion: solo Chef puede cambiar roles
+    if current_user.role != models.UserRole.CHEF:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only Chef can change user roles"
+        )
+
+# Mantener la restriccion original de no permitir asignar Chef
+
     if user.role == models.UserRole.CHEF.value:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -25,3 +33,6 @@ async def update_user_role(
 
     db_user = update_user(db, user.username, user)
     return current_user
+
+# La primera pregunta: “¿eres Chef?” → si no, no puedes tocar nada.
+# La segunda pregunta: “¿quieres poner el rol Chef a alguien?” → si sí, bloquea incluso a los Chef existentes, porque no pueden asignar Chef a otros.
