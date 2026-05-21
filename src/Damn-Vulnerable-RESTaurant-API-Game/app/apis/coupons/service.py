@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, HTTPException
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -7,7 +7,7 @@ router = APIRouter()
 class CouponApplyRequest(BaseModel):
     username: str
     coupon_code: str
-    discount_percent: int
+    discount_percent: int  # Se ignorará este valor para la mitigación
 
 
 class CouponApplyResponse(BaseModel):
@@ -17,6 +17,14 @@ class CouponApplyResponse(BaseModel):
     message: str
 
 
+# Diccionario de cupones válidos y su descuento real
+VALID_COUPONS = {
+    "ADMIN90": 10,      # solo 10% real
+    "WELCOME10": 10,
+    "SUMMER20": 20,
+}
+
+
 @router.post(
     "/coupons/apply",
     response_model=CouponApplyResponse,
@@ -24,17 +32,19 @@ class CouponApplyResponse(BaseModel):
 )
 async def apply_coupon(coupon: CouponApplyRequest):
     """
-    Vulnerable endpoint created as project extension.
-
-    Security issue:
-    The API trusts the discount_percent value sent by the client.
-    A normal user can submit an arbitrary discount value.
+    Mitigated endpoint: server validates discount_percent based on coupon_code
     """
+
+    # Verificar que el cupón exista
+    if coupon.coupon_code not in VALID_COUPONS:
+        raise HTTPException(status_code=400, detail="Coupon code invalid")
+
+    # Usar solo el descuento seguro definido en el servidor
+    applied_discount = VALID_COUPONS[coupon.coupon_code]
 
     return CouponApplyResponse(
         username=coupon.username,
         coupon_code=coupon.coupon_code,
-        applied_discount=coupon.discount_percent,
-        message="Coupon applied without server-side validation",
+        applied_discount=applied_discount,
+        message="Coupon applied with server-side validation",
     )
-
